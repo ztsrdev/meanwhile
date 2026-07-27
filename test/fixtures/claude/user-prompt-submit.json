@@ -1,0 +1,9 @@
+{
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "prompt_id": "prompt-01JZ8M7YQW4S8V3N2K6H9C1B5D",
+  "transcript_path": "/tmp/t.jsonl",
+  "cwd": "/tmp/proj",
+  "permission_mode": "default",
+  "hook_event_name": "UserPromptSubmit",
+  "prompt": "Refactor the auth module"
+}

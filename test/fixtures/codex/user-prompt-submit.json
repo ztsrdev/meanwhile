@@ -1,0 +1,10 @@
+{
+  "session_id": "019f2755-2cf7-72f3-947b-60ef7c45047a",
+  "turn_id": "019f2755-3467-7f6a-81e8-5bf248fc4c70",
+  "transcript_path": "/tmp/codex-session.jsonl",
+  "cwd": "/tmp/proj",
+  "hook_event_name": "UserPromptSubmit",
+  "model": "gpt-5.6-sol",
+  "permission_mode": "default",
+  "prompt": "Fix the tests"
+}

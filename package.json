@@ -1,0 +1,23 @@
+{
+  "name": "awaitlingo",
+  "version": "0.1.0",
+  "type": "module",
+  "bin": {
+    "awaitlingo": "dist/awaitlingo.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && node scripts/bundle.mjs",
+    "bundle": "node scripts/bundle.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "esbuild": "0.25.12",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  }
+}
