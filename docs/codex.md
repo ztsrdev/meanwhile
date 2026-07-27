@@ -1,6 +1,6 @@
 # Codex CLI
 
-`awaitlingo install` adds only awaitlingo-owned entries to `~/.codex/hooks.json`.
+`meanwhile install` adds only meanwhile-owned entries to `~/.codex/hooks.json`.
 
 ## Hooks written
 
@@ -16,10 +16,10 @@ groups placed at the root (verified against codex-cli 0.144.1). Each event
 receives one command hook equivalent to:
 
 ```json
-{"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "node ~/.awaitlingo/bin/awaitlingo.mjs hook --harness codex", "timeout": 10}]}]}}
+{"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "node ~/.meanwhile/bin/meanwhile.mjs hook --harness codex", "timeout": 10}]}]}}
 ```
 
-The real command contains the absolute home path. There is no `async` field: Codex 0.144.1 silently skips hooks marked async. Re-running `awaitlingo install` repairs a file whose events ended up at the root (for example, one written by an early awaitlingo build).
+The real command contains the absolute home path. There is no `async` field: Codex 0.144.1 silently skips hooks marked async. Re-running `meanwhile install` repairs a file whose events ended up at the root (for example, one written by an early meanwhile build).
 
 ## Trust the hooks once
 
@@ -27,18 +27,18 @@ After installation:
 
 1. Start `codex`.
 2. Type `/hooks`.
-3. Review and approve the awaitlingo hooks.
+3. Review and approve the meanwhile hooks.
 
 Until this approval, Codex silently no-ops the entries. If Claude works but Codex does nothing, check trust first.
 
 ## What the installer leaves alone
 
-awaitlingo does not edit `~/.codex/config.toml`. It does not replace or wrap your `notify` setting. Uninstall removes only entries identified as awaitlingo's.
+meanwhile does not edit `~/.codex/config.toml`. It does not replace or wrap your `notify` setting. Uninstall removes only entries identified as meanwhile's.
 
-The runnable bundle is copied into `~/.awaitlingo/bin/` so an installation survives changes to a repository checkout and to nvm/npx package locations.
+The runnable bundle is copied into `~/.meanwhile/bin/` so an installation survives changes to a repository checkout and to nvm/npx package locations.
 
 ## Lifecycle limitation
 
-Codex exposes turn end and permission requests, but not Claude's idle notification signal. awaitlingo therefore pulls back on `Stop` or `PermissionRequest`; it cannot distinguish every form of waiting-for-input state.
+Codex exposes turn end and permission requests, but not Claude's idle notification signal. meanwhile therefore pulls back on `Stop` or `PermissionRequest`; it cannot distinguish every form of waiting-for-input state.
 
-Run `awaitlingo status` to inspect the entries, bundle, and local permission path. Hook errors are written to `~/.awaitlingo/logs/awaitlingo.log`.
+Run `meanwhile status` to inspect the entries, bundle, and local permission path. Hook errors are written to `~/.meanwhile/logs/meanwhile.log`.

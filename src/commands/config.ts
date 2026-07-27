@@ -134,6 +134,6 @@ export function runConfig(
     return
   }
   throw new Error(
-    'Usage: awaitlingo config <get <dot.path>|set <dot.path> <value>|list>',
+    'Usage: meanwhile config <get <dot.path>|set <dot.path> <value>|list>',
   )
 }

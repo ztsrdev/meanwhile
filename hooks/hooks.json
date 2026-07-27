@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/awaitlingo.mjs\" hook --harness claude",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/meanwhile.mjs\" hook --harness claude",
             "async": true,
             "timeout": 10
           }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/awaitlingo.mjs\" hook --harness claude",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/meanwhile.mjs\" hook --harness claude",
             "async": true,
             "timeout": 10
           }
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/awaitlingo.mjs\" hook --harness claude",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/meanwhile.mjs\" hook --harness claude",
             "async": true,
             "timeout": 10
           }
@@ -42,7 +42,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/awaitlingo.mjs\" hook --harness claude",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/dist/meanwhile.mjs\" hook --harness claude",
             "timeout": 10
           }
         ]

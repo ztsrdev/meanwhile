@@ -48,10 +48,10 @@ async function reportClaude(
     io.stdout('⚠ Claude: CLI found; plugin check skipped (dry-run)')
   } else if (result.exitCode !== 0) {
     io.stdout('⚠ Claude: CLI found; `claude plugin list` failed')
-  } else if (/awaitlingo/i.test(`${result.stdout}\n${result.stderr}`)) {
-    io.stdout('✓ Claude: CLI found; awaitlingo plugin installed')
+  } else if (/meanwhile/i.test(`${result.stdout}\n${result.stderr}`)) {
+    io.stdout('✓ Claude: CLI found; meanwhile plugin installed')
   } else {
-    io.stdout('✗ Claude: CLI found; awaitlingo plugin not installed')
+    io.stdout('✗ Claude: CLI found; meanwhile plugin not installed')
   }
 }
 

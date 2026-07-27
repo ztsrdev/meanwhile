@@ -1,5 +1,5 @@
 export function isDryRun(): boolean {
-  return process.env.AWAITLINGO_DRYRUN === '1'
+  return process.env.MEANWHILE_DRYRUN === '1'
 }
 
 export function underConductor(): boolean {

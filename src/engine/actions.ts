@@ -86,7 +86,7 @@ async function pullBack(
   if (!suppressAlerts) {
     const alerts: Array<Promise<void>> = []
     if (cfg.pullBack.notification) {
-      alerts.push(platform.notify('awaitlingo', body))
+      alerts.push(platform.notify('meanwhile', body))
     }
     if (cfg.pullBack.sound) {
       alerts.push(platform.playSound())
@@ -121,7 +121,7 @@ export function onPromptSubmit(
   const nonce = (deps.nonce ?? randomUUID)()
   const selfPath = deps.selfPath ?? process.argv[1]
   if (!selfPath) {
-    throw new Error('Unable to resolve the awaitlingo entry script')
+    throw new Error('Unable to resolve the meanwhile entry script')
   }
 
   gcIfDue(now)

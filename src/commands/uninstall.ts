@@ -35,7 +35,7 @@ function processFailure(
 function purgeHome(target: string): void {
   const resolved = resolve(target)
   if (resolved === '/' || resolved === resolve(os.homedir())) {
-    throw new Error(`Refusing to purge unsafe awaitlingo home: ${resolved}`)
+    throw new Error(`Refusing to purge unsafe meanwhile home: ${resolved}`)
   }
   if (isDryRun()) {
     appendLog(`dryrun: remove ${resolved}`)
@@ -58,7 +58,7 @@ export async function runUninstall(
     const plugin = await runner(detection.claude.path, [
       'plugin',
       'uninstall',
-      'awaitlingo',
+      'meanwhile',
     ])
     processFailure('Claude plugin uninstall', plugin, io)
 
@@ -66,7 +66,7 @@ export async function runUninstall(
       'plugin',
       'marketplace',
       'remove',
-      'awaitlingo',
+      'meanwhile',
     ])
     processFailure('Claude marketplace removal', marketplace, io)
   } else {
@@ -78,11 +78,11 @@ export async function runUninstall(
     if (mutation.changed) {
       io.stdout(
         isDryRun()
-          ? `✓ (dry-run) would write ${mutation.path} without awaitlingo entries`
-          : `✓ Removed awaitlingo entries from ${mutation.path}`,
+          ? `✓ (dry-run) would write ${mutation.path} without meanwhile entries`
+          : `✓ Removed meanwhile entries from ${mutation.path}`,
       )
     } else {
-      io.stdout(`- No awaitlingo Codex hooks found at ${mutation.path}`)
+      io.stdout(`- No meanwhile Codex hooks found at ${mutation.path}`)
     }
     if (mutation.backupPath) {
       io.stdout(
@@ -99,7 +99,7 @@ export async function runUninstall(
     const confirmed =
       options.yes ||
       (await io.confirm(
-        `Delete all awaitlingo config and state at ${home()}? [y/N] `,
+        `Delete all meanwhile config and state at ${home()}? [y/N] `,
         false,
       ))
     if (confirmed) {

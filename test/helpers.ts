@@ -11,16 +11,16 @@ import { join } from 'node:path'
 import type { Config, NormalizedEvent } from '../src/types.js'
 
 export function createTestHome(): string {
-  const directory = mkdtempSync(join(tmpdir(), 'awaitlingo-test-'))
-  process.env.AWAITLINGO_HOME = directory
-  process.env.AWAITLINGO_DRYRUN = '1'
+  const directory = mkdtempSync(join(tmpdir(), 'meanwhile-test-'))
+  process.env.MEANWHILE_HOME = directory
+  process.env.MEANWHILE_DRYRUN = '1'
   return directory
 }
 
 export function removeTestHome(directory: string): void {
   rmSync(directory, { recursive: true, force: true })
-  delete process.env.AWAITLINGO_HOME
-  delete process.env.AWAITLINGO_DRYRUN
+  delete process.env.MEANWHILE_HOME
+  delete process.env.MEANWHILE_DRYRUN
 }
 
 function filesBelow(directory: string): string[] {
@@ -32,7 +32,7 @@ function filesBelow(directory: string): string[] {
 
 export function ensureFreshBundle(): void {
   const root = process.cwd()
-  const bundlePath = join(root, 'dist', 'awaitlingo.mjs')
+  const bundlePath = join(root, 'dist', 'meanwhile.mjs')
   const inputs = [
     ...filesBelow(join(root, 'src')),
     join(root, 'scripts', 'bundle.mjs'),

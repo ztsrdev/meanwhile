@@ -69,7 +69,7 @@ export async function execute(
     logDryRun(command, args, options.dryRunDescription)
   }
 
-  if (process.env.AWAITLINGO_TEST_FAIL_EXEC === '1') {
+  if (process.env.MEANWHILE_TEST_FAIL_EXEC === '1') {
     return {
       stdout: '',
       stderr: `forced execFile failure for ${command}`,

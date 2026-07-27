@@ -3,6 +3,7 @@ import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 interface PluginManifest {
+  name: string
   version: string
 }
 
@@ -21,7 +22,9 @@ interface HooksManifest {
 }
 
 interface MarketplaceManifest {
+  name: string
   plugins: Array<{
+    name: string
     source: string | { source: string }
   }>
 }
@@ -43,11 +46,17 @@ describe('Claude Code plugin schema', () => {
     }
   })
 
-  it('keeps the plugin version aligned with package.json', () => {
+  it('keeps the plugin identity aligned with package.json', () => {
     const plugin = readJson(pluginPath) as PluginManifest
     const packageJson = readJson(packagePath) as PluginManifest
+    const marketplace = readJson(marketplacePath) as MarketplaceManifest
 
     expect(plugin.version).toBe(packageJson.version)
+    expect(plugin.name).toBe('meanwhile')
+    expect(marketplace.name).toBe('meanwhile')
+    expect(marketplace.plugins.map((entry) => entry.name)).toEqual([
+      'meanwhile',
+    ])
   })
 
   it('points every hook at the bundled entrypoint', () => {
@@ -59,10 +68,10 @@ describe('Claude Code plugin schema', () => {
     expect(commands.length).toBeGreaterThan(0)
     for (const command of commands) {
       expect(command.command).toContain(
-        '${CLAUDE_PLUGIN_ROOT}/dist/awaitlingo.mjs',
+        '${CLAUDE_PLUGIN_ROOT}/dist/meanwhile.mjs',
       )
     }
-    expect(existsSync(join(root, 'dist', 'awaitlingo.mjs'))).toBe(true)
+    expect(existsSync(join(root, 'dist', 'meanwhile.mjs'))).toBe(true)
   })
 
   it('uses only the supported events and required hook options', () => {

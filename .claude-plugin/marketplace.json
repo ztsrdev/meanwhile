@@ -1,14 +1,14 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "awaitlingo",
-  "description": "Claude Code marketplace for awaitlingo",
+  "name": "meanwhile",
+  "description": "Claude Code marketplace for meanwhile",
   "owner": {
     "name": "ZepaMK"
   },
   "plugins": [
     {
-      "name": "awaitlingo",
-      "description": "Learn a language in the await — opens a learning site while your agent works, pulls you back when it needs you",
+      "name": "meanwhile",
+      "description": "Open any site while your agent works, then return when it needs you",
       "version": "0.1.0",
       "source": ".",
       "author": {

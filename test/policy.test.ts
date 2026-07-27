@@ -119,7 +119,7 @@ describe('pull-back policy', () => {
       await onStop(event('session-a', 'stop'), config('any-finishes'), platform)
 
       expect(platform.actions).toContain(
-        'notify awaitlingo: Your coding agent is ready.',
+        'notify meanwhile: Your coding agent is ready.',
       )
       expect(platform.actions.includes('activateApp com.example.editor')).toBe(
         shouldActivate,

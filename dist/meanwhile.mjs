@@ -11,7 +11,7 @@ import os from "node:os";
 import { join } from "node:path";
 var SESSION_ID_PATTERN = /^[A-Za-z0-9._-]+$/;
 function home() {
-  return process.env.AWAITLINGO_HOME ?? join(os.homedir(), ".awaitlingo");
+  return process.env.MEANWHILE_HOME ?? join(os.homedir(), ".meanwhile");
 }
 function configPath() {
   return join(home(), "config.json");
@@ -35,7 +35,7 @@ function logDir() {
   return join(home(), "logs");
 }
 function logPath() {
-  return join(logDir(), "awaitlingo.log");
+  return join(logDir(), "meanwhile.log");
 }
 
 // src/engine/log.ts
@@ -53,7 +53,7 @@ import { readFileSync } from "node:fs";
 
 // src/engine/env.ts
 function isDryRun() {
-  return process.env.AWAITLINGO_DRYRUN === "1";
+  return process.env.MEANWHILE_DRYRUN === "1";
 }
 function underConductor() {
   return Object.keys(process.env).some((key) => key.startsWith("CONDUCTOR_"));
@@ -494,7 +494,7 @@ async function pullBack(away, cfg, platform, body) {
   if (!suppressAlerts) {
     const alerts = [];
     if (cfg.pullBack.notification) {
-      alerts.push(platform.notify("awaitlingo", body));
+      alerts.push(platform.notify("meanwhile", body));
     }
     if (cfg.pullBack.sound) {
       alerts.push(platform.playSound());
@@ -517,7 +517,7 @@ function onPromptSubmit(ev, cfg, deps = {}) {
   const nonce = (deps.nonce ?? randomUUID2)();
   const selfPath = deps.selfPath ?? process.argv[1];
   if (!selfPath) {
-    throw new Error("Unable to resolve the awaitlingo entry script");
+    throw new Error("Unable to resolve the meanwhile entry script");
   }
   gcIfDue(now);
   setBusy(ev.sessionId, ev.harness, ev.cwd, now);
@@ -682,7 +682,7 @@ async function execute(command, args, options) {
   if (dryRun) {
     logDryRun(command, args, options.dryRunDescription);
   }
-  if (process.env.AWAITLINGO_TEST_FAIL_EXEC === "1") {
+  if (process.env.MEANWHILE_TEST_FAIL_EXEC === "1") {
     return {
       stdout: "",
       stderr: `forced execFile failure for ${command}`,
@@ -979,17 +979,17 @@ function codexHooksPath() {
   return join5(codexHome(), "hooks.json");
 }
 function vendoredBundlePath() {
-  return join5(home(), "bin", "awaitlingo.mjs");
+  return join5(home(), "bin", "meanwhile.mjs");
 }
 function backupRoot() {
   return join5(home(), "backup");
 }
-function isAwaitlingoRoot(directory) {
+function isMeanwhileRoot(directory) {
   try {
     const parsed = JSON.parse(
       readFileSync5(join5(directory, "package.json"), "utf8")
     );
-    return typeof parsed === "object" && parsed !== null && parsed.name === "awaitlingo";
+    return typeof parsed === "object" && parsed !== null && parsed.name === "meanwhile-cli";
   } catch {
     return false;
   }
@@ -997,7 +997,7 @@ function isAwaitlingoRoot(directory) {
 function resolveRepoRoot(moduleUrl = import.meta.url) {
   let directory = dirname3(fileURLToPath(moduleUrl));
   for (let depth = 0; depth < 4; depth += 1) {
-    if (isAwaitlingoRoot(directory)) {
+    if (isMeanwhileRoot(directory)) {
       return directory;
     }
     const parent = dirname3(directory);
@@ -1007,7 +1007,7 @@ function resolveRepoRoot(moduleUrl = import.meta.url) {
     directory = parent;
   }
   throw new Error(
-    `Unable to resolve the awaitlingo repository root from ${fileURLToPath(moduleUrl)}`
+    `Unable to resolve the meanwhile repository root from ${fileURLToPath(moduleUrl)}`
   );
 }
 function findExecutable(name, pathValue = process.env.PATH) {
@@ -1151,15 +1151,15 @@ function shellArgument(value) {
 function codexHookCommand(bundlePath = vendoredBundlePath()) {
   return `node ${shellArgument(bundlePath)} hook --harness codex`;
 }
-function isAwaitlingoCommand(command, bundlePath = vendoredBundlePath()) {
+function isMeanwhileCommand(command, bundlePath = vendoredBundlePath()) {
   if (typeof command !== "string") {
     return false;
   }
   const normalized = command.replaceAll("\\", "/");
   const normalizedBundle = bundlePath.replaceAll("\\", "/");
-  return normalized.includes(normalizedBundle) || normalized.includes(".awaitlingo/bin/awaitlingo.mjs") || normalized.includes("awaitlingo.mjs") && normalized.includes("hook --harness codex");
+  return normalized.includes(normalizedBundle) || normalized.includes(".meanwhile/bin/meanwhile.mjs") || normalized.includes("meanwhile.mjs") && normalized.includes("hook --harness codex") || normalized.includes("awaitlingo.mjs") && normalized.includes("hook --harness codex");
 }
-function filterAwaitlingoHooks(groups, bundlePath) {
+function filterMeanwhileHooks(groups, bundlePath) {
   if (!Array.isArray(groups)) {
     return { groups, found: false };
   }
@@ -1171,7 +1171,7 @@ function filterAwaitlingoHooks(groups, bundlePath) {
       continue;
     }
     const hooks = group.hooks.filter((hook) => {
-      const ours = isRecord3(hook) && isAwaitlingoCommand(hook.command, bundlePath);
+      const ours = isRecord3(hook) && isMeanwhileCommand(hook.command, bundlePath);
       found ||= ours;
       return !ours;
     });
@@ -1212,7 +1212,7 @@ function mergeCodexHooks(path = codexHooksPath(), bundlePath = vendoredBundlePat
   }
   const command = codexHookCommand(bundlePath);
   for (const event of CODEX_EVENTS) {
-    const filtered = filterAwaitlingoHooks(container[event], bundlePath);
+    const filtered = filterMeanwhileHooks(container[event], bundlePath);
     const groups = Array.isArray(filtered.groups) ? filtered.groups : [];
     container[event] = [
       ...groups,
@@ -1252,7 +1252,7 @@ function removeCodexHooks(path = codexHooksPath(), bundlePath = vendoredBundlePa
       if (scope === root && event === "hooks") {
         continue;
       }
-      const filtered = filterAwaitlingoHooks(scope[event], bundlePath);
+      const filtered = filterMeanwhileHooks(scope[event], bundlePath);
       if (filtered.found) {
         scope[event] = filtered.groups;
         changed = true;
@@ -1292,7 +1292,7 @@ function inspectCodexHooks(path = codexHooksPath(), bundlePath = vendoredBundleP
       return {
         present,
         events,
-        error: "legacy unwrapped hooks layout detected (Codex ignores it); run `awaitlingo install` to repair"
+        error: "legacy unwrapped hooks layout detected (Codex ignores it); run `meanwhile install` to repair"
       };
     }
     return { present, events };
@@ -1353,7 +1353,7 @@ async function installClaude(executable, repoRoot, runner, io) {
   const plugin = await runner(executable, [
     "plugin",
     "install",
-    "awaitlingo@awaitlingo"
+    "meanwhile@meanwhile"
   ]);
   if (!idempotentClaudeSuccess(plugin)) {
     io.stderr(
@@ -1367,7 +1367,7 @@ async function installClaude(executable, repoRoot, runner, io) {
   return true;
 }
 function vendorBundle(repoRoot, destination = vendoredBundlePath()) {
-  const source = join7(repoRoot, "dist", "awaitlingo.mjs");
+  const source = join7(repoRoot, "dist", "meanwhile.mjs");
   if (isDryRun()) {
     appendLog(`dryrun: would copy ${source} to ${destination}`);
     return;
@@ -1457,7 +1457,7 @@ async function runInstall(options) {
   io.stdout(
     "\u26A0 macOS may show a one-time \u201Cwants to control Google Chrome\u201D Automation dialog; approve it for browser switching."
   );
-  io.stdout("Run `awaitlingo status` to verify the installation.");
+  io.stdout("Run `meanwhile status` to verify the installation.");
   return succeeded;
 }
 
@@ -1479,7 +1479,7 @@ function processFailure(label, result, io) {
 function purgeHome(target) {
   const resolved = resolve2(target);
   if (resolved === "/" || resolved === resolve2(os3.homedir())) {
-    throw new Error(`Refusing to purge unsafe awaitlingo home: ${resolved}`);
+    throw new Error(`Refusing to purge unsafe meanwhile home: ${resolved}`);
   }
   if (isDryRun()) {
     appendLog(`dryrun: remove ${resolved}`);
@@ -1498,14 +1498,14 @@ async function runUninstall(options) {
     const plugin = await runner(detection.claude.path, [
       "plugin",
       "uninstall",
-      "awaitlingo"
+      "meanwhile"
     ]);
     processFailure("Claude plugin uninstall", plugin, io);
     const marketplace = await runner(detection.claude.path, [
       "plugin",
       "marketplace",
       "remove",
-      "awaitlingo"
+      "meanwhile"
     ]);
     processFailure("Claude marketplace removal", marketplace, io);
   } else {
@@ -1515,10 +1515,10 @@ async function runUninstall(options) {
     const mutation = removeCodexHooks();
     if (mutation.changed) {
       io.stdout(
-        isDryRun() ? `\u2713 (dry-run) would write ${mutation.path} without awaitlingo entries` : `\u2713 Removed awaitlingo entries from ${mutation.path}`
+        isDryRun() ? `\u2713 (dry-run) would write ${mutation.path} without meanwhile entries` : `\u2713 Removed meanwhile entries from ${mutation.path}`
       );
     } else {
-      io.stdout(`- No awaitlingo Codex hooks found at ${mutation.path}`);
+      io.stdout(`- No meanwhile Codex hooks found at ${mutation.path}`);
     }
     if (mutation.backupPath) {
       io.stdout(
@@ -1530,7 +1530,7 @@ async function runUninstall(options) {
   }
   if (options.purge) {
     const confirmed = options.yes || await io.confirm(
-      `Delete all awaitlingo config and state at ${home()}? [y/N] `,
+      `Delete all meanwhile config and state at ${home()}? [y/N] `,
       false
     );
     if (confirmed) {
@@ -1578,11 +1578,11 @@ async function reportClaude(executable, runner, io) {
     io.stdout("\u26A0 Claude: CLI found; plugin check skipped (dry-run)");
   } else if (result.exitCode !== 0) {
     io.stdout("\u26A0 Claude: CLI found; `claude plugin list` failed");
-  } else if (/awaitlingo/i.test(`${result.stdout}
+  } else if (/meanwhile/i.test(`${result.stdout}
 ${result.stderr}`)) {
-    io.stdout("\u2713 Claude: CLI found; awaitlingo plugin installed");
+    io.stdout("\u2713 Claude: CLI found; meanwhile plugin installed");
   } else {
-    io.stdout("\u2717 Claude: CLI found; awaitlingo plugin not installed");
+    io.stdout("\u2717 Claude: CLI found; meanwhile plugin not installed");
   }
 }
 async function reportCodex(executable, runner, io) {
@@ -1796,7 +1796,7 @@ function runConfig(args, io = consoleIO) {
     return;
   }
   throw new Error(
-    "Usage: awaitlingo config <get <dot.path>|set <dot.path> <value>|list>"
+    "Usage: meanwhile config <get <dot.path>|set <dot.path> <value>|list>"
   );
 }
 
@@ -1859,7 +1859,7 @@ async function runTimer(sessionId, nonce, delayValue) {
 }
 async function main() {
   const rawCommand = process.argv[2];
-  if (rawCommand === "hook" && (process.env.AWAITLINGO_DISABLE === "1" || process.env.AWAITLINGO_DISABLE === "true")) {
+  if (rawCommand === "hook" && (process.env.MEANWHILE_DISABLE === "1" || process.env.MEANWHILE_DISABLE === "true")) {
     return;
   }
   try {
@@ -1918,7 +1918,7 @@ async function main() {
       runConfig(positionals.slice(1));
       return;
     }
-    console.error("Usage: awaitlingo <hook|timer|version|install|uninstall|status|config>");
+    console.error("Usage: meanwhile <hook|timer|version|install|uninstall|status|config>");
     process.exitCode = 1;
   } catch (error) {
     appendLog(`${rawCommand ?? "cli"}: ${String(error)}`);
@@ -1926,7 +1926,7 @@ async function main() {
       process.exitCode = 0;
       return;
     }
-    console.error(`awaitlingo: ${String(error)}`);
+    console.error(`meanwhile: ${String(error)}`);
     process.exitCode = 1;
   }
 }

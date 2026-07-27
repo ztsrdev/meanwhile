@@ -1,9 +1,9 @@
 {
-  "name": "awaitlingo",
+  "name": "meanwhile-cli",
   "version": "0.1.0",
   "type": "module",
   "bin": {
-    "awaitlingo": "dist/awaitlingo.mjs"
+    "meanwhile": "dist/meanwhile.mjs"
   },
   "engines": {
     "node": ">=20"

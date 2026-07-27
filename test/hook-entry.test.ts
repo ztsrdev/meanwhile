@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ensureFreshBundle } from './helpers.js'
 
 const root = process.cwd()
-const bundlePath = join(root, 'dist', 'awaitlingo.mjs')
+const bundlePath = join(root, 'dist', 'meanwhile.mjs')
 
 describe('built hook entrypoint', () => {
   beforeAll(() => {
@@ -20,7 +20,7 @@ describe('built hook entrypoint', () => {
   it('exits silently and quickly after creating prompt state', async () => {
     const home = join(
       tmpdir(),
-      `awaitlingo-hook-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      `meanwhile-hook-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     )
     mkdirSync(home, { recursive: true })
     writeFileSync(
@@ -49,8 +49,8 @@ describe('built hook entrypoint', () => {
         timeout: 2_000,
         env: {
           ...process.env,
-          AWAITLINGO_HOME: home,
-          AWAITLINGO_DRYRUN: '1',
+          MEANWHILE_HOME: home,
+          MEANWHILE_DRYRUN: '1',
         },
       },
     )
@@ -86,7 +86,7 @@ describe('built hook entrypoint', () => {
   it('exits silently without creating session state when disabled', () => {
     const home = join(
       tmpdir(),
-      `awaitlingo-disabled-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      `meanwhile-disabled-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
     )
     const payload = {
       session_id: 'disabled-hook-session',
@@ -106,8 +106,8 @@ describe('built hook entrypoint', () => {
         timeout: 2_000,
         env: {
           ...process.env,
-          AWAITLINGO_HOME: home,
-          AWAITLINGO_DISABLE: '1',
+          MEANWHILE_HOME: home,
+          MEANWHILE_DISABLE: '1',
         },
       },
     )

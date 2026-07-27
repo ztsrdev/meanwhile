@@ -43,6 +43,9 @@ jobs:
       - name: Verify reproducible bundle
         run: |
           npm run bundle
+          cp dist/meanwhile.mjs "$RUNNER_TEMP/meanwhile-first.mjs"
+          npm run bundle
+          cmp "$RUNNER_TEMP/meanwhile-first.mjs" dist/meanwhile.mjs
           git diff --exit-code dist/
 
       - name: Smoke-test packed CLI
@@ -54,6 +57,7 @@ jobs:
           cd "$smoke_dir"
           npm init -y >/dev/null
           npm install "$tarball_path" >/dev/null
-          mkdir -p "$smoke_dir/awaitlingo-home" "$smoke_dir/codex-home"
-          AWAITLINGO_DRYRUN=1 AWAITLINGO_HOME="$smoke_dir/awaitlingo-home" CODEX_HOME="$smoke_dir/codex-home" npx awaitlingo version
-          AWAITLINGO_DRYRUN=1 AWAITLINGO_HOME="$smoke_dir/awaitlingo-home" CODEX_HOME="$smoke_dir/codex-home" npx awaitlingo status
+          node -e "const pkg = require('./node_modules/meanwhile-cli/package.json'); if (pkg.name !== 'meanwhile-cli') process.exit(1)"
+          mkdir -p "$smoke_dir/meanwhile-home" "$smoke_dir/codex-home"
+          MEANWHILE_DRYRUN=1 MEANWHILE_HOME="$smoke_dir/meanwhile-home" CODEX_HOME="$smoke_dir/codex-home" npx meanwhile version
+          MEANWHILE_DRYRUN=1 MEANWHILE_HOME="$smoke_dir/meanwhile-home" CODEX_HOME="$smoke_dir/codex-home" npx meanwhile status

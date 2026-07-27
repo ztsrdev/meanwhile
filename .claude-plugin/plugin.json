@@ -1,7 +1,7 @@
 {
-  "name": "awaitlingo",
+  "name": "meanwhile",
   "version": "0.1.0",
-  "description": "Learn a language in the await — opens a learning site while your agent works, pulls you back when it needs you",
+  "description": "Open any site while your agent works, then return when it needs you",
   "author": {
     "name": "ZepaMK"
   }

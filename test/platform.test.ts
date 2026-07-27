@@ -12,17 +12,17 @@ import {
 } from '../src/platform/index.js'
 import { createTestHome, removeTestHome } from './helpers.js'
 
-const originalDryRun = process.env.AWAITLINGO_DRYRUN
+const originalDryRun = process.env.MEANWHILE_DRYRUN
 
 beforeAll(() => {
-  process.env.AWAITLINGO_DRYRUN = '1'
+  process.env.MEANWHILE_DRYRUN = '1'
 })
 
 afterAll(() => {
   if (originalDryRun === undefined) {
-    delete process.env.AWAITLINGO_DRYRUN
+    delete process.env.MEANWHILE_DRYRUN
   } else {
-    process.env.AWAITLINGO_DRYRUN = originalDryRun
+    process.env.MEANWHILE_DRYRUN = originalDryRun
   }
 })
 
@@ -79,7 +79,7 @@ describe('platform dry-run behavior', () => {
   })
 
   afterEach(() => {
-    delete process.env.AWAITLINGO_TEST_FAIL_EXEC
+    delete process.env.MEANWHILE_TEST_FAIL_EXEC
     removeTestHome(testHome)
   })
 
@@ -104,7 +104,7 @@ describe('platform dry-run behavior', () => {
       platform.openOrFocusUrl('https://www.duolingo.com/learn', 'default'),
     ).resolves.toBeUndefined()
     await expect(platform.activateApp('com.example.editor')).resolves.toBeUndefined()
-    await expect(platform.notify('awaitlingo', 'Agent "ready"')).resolves.toBeUndefined()
+    await expect(platform.notify('meanwhile', 'Agent "ready"')).resolves.toBeUndefined()
     await expect(platform.playSound()).resolves.toBeUndefined()
 
     expect(logs()).toEqual(expect.stringContaining('"command":"osascript"'))
@@ -148,7 +148,7 @@ describe('platform dry-run behavior', () => {
       platform.openOrFocusUrl('https://www.duolingo.com/learn', 'chrome'),
     ).resolves.toBeUndefined()
     await expect(platform.activateApp('com.example.editor')).resolves.toBeUndefined()
-    await expect(platform.notify('awaitlingo', 'Ready')).resolves.toBeUndefined()
+    await expect(platform.notify('meanwhile', 'Ready')).resolves.toBeUndefined()
     await expect(platform.playSound()).resolves.toBeUndefined()
 
     const output = logs()
@@ -160,14 +160,14 @@ describe('platform dry-run behavior', () => {
   })
 
   it('falls back and never throws when execFile is forced to fail', async () => {
-    process.env.AWAITLINGO_TEST_FAIL_EXEC = '1'
+    process.env.MEANWHILE_TEST_FAIL_EXEC = '1'
     const platform = new DarwinPlatform()
     const url = 'https://www.duolingo.com/learn'
 
     await expect(platform.openOrFocusUrl(url, 'auto')).resolves.toBeUndefined()
     await expect(platform.frontmostBundleId()).resolves.toBeNull()
     await expect(platform.activateApp('com.example.editor')).resolves.toBeUndefined()
-    await expect(platform.notify('awaitlingo', 'Ready')).resolves.toBeUndefined()
+    await expect(platform.notify('meanwhile', 'Ready')).resolves.toBeUndefined()
     await expect(platform.playSound()).resolves.toBeUndefined()
 
     const output = logs()
