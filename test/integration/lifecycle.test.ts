@@ -14,7 +14,7 @@ import type { Harness } from '../../src/types.js'
 import { ensureFreshBundle } from '../helpers.js'
 
 const root = process.cwd()
-const bundlePath = join(root, 'dist', 'awaitlingo.mjs')
+const bundlePath = join(root, 'dist', 'meanwhile.mjs')
 const fixtureRoot = join(root, 'test', 'fixtures')
 const awayUrl = 'https://example.test/away'
 const claudeSession = '550e8400-e29b-41d4-a716-446655440000'
@@ -61,7 +61,7 @@ function readJson<T>(path: string): T {
 }
 
 function readLog(home: string): string {
-  const path = join(home, 'logs', 'awaitlingo.log')
+  const path = join(home, 'logs', 'meanwhile.log')
   return existsSync(path) ? readFileSync(path, 'utf8') : ''
 }
 
@@ -148,8 +148,8 @@ function childEnvironment(
   }
   return {
     ...env,
-    AWAITLINGO_HOME: home,
-    AWAITLINGO_DRYRUN: '1',
+    MEANWHILE_HOME: home,
+    MEANWHILE_DRYRUN: '1',
     ...extra,
   }
 }
@@ -187,7 +187,7 @@ function runBundle(
     child.on('close', (code) => {
       clearTimeout(timeout)
       if (timedOut) {
-        reject(new Error(`awaitlingo ${args.join(' ')} exceeded 4 seconds`))
+        reject(new Error(`meanwhile ${args.join(' ')} exceeded 4 seconds`))
         return
       }
       resolve({
@@ -271,7 +271,7 @@ function createHome(
   multiSession: 'all-idle' | 'any-finishes' = 'all-idle',
   sound = false,
 ): string {
-  testHome = mkdtempSync(join(tmpdir(), 'awaitlingo-integration-'))
+  testHome = mkdtempSync(join(tmpdir(), 'meanwhile-integration-'))
   writeFileSync(
     join(testHome, 'config.json'),
     JSON.stringify({

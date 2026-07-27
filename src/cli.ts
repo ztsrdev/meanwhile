@@ -88,8 +88,8 @@ async function main(): Promise<void> {
   const rawCommand = process.argv[2]
   if (
     rawCommand === 'hook' &&
-    (process.env.AWAITLINGO_DISABLE === '1' ||
-      process.env.AWAITLINGO_DISABLE === 'true')
+    (process.env.MEANWHILE_DISABLE === '1' ||
+      process.env.MEANWHILE_DISABLE === 'true')
   ) {
     return
   }
@@ -152,7 +152,7 @@ async function main(): Promise<void> {
       return
     }
 
-    console.error('Usage: awaitlingo <hook|timer|version|install|uninstall|status|config>')
+    console.error('Usage: meanwhile <hook|timer|version|install|uninstall|status|config>')
     process.exitCode = 1
   } catch (error) {
     appendLog(`${rawCommand ?? 'cli'}: ${String(error)}`)
@@ -160,7 +160,7 @@ async function main(): Promise<void> {
       process.exitCode = 0
       return
     }
-    console.error(`awaitlingo: ${String(error)}`)
+    console.error(`meanwhile: ${String(error)}`)
     process.exitCode = 1
   }
 }

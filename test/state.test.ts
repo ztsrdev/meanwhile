@@ -119,7 +119,7 @@ describe('session state', () => {
     onPromptSubmit(event('session-a', 'prompt-submit'), config(), {
       now: () => now,
       nonce: () => 'nonce-a',
-      selfPath: '/tmp/awaitlingo.mjs',
+      selfPath: '/tmp/meanwhile.mjs',
       spawn: spawnTimer,
     })
     expect(existsSync(firstStale)).toBe(false)
@@ -130,7 +130,7 @@ describe('session state', () => {
     onPromptSubmit(event('session-b', 'prompt-submit'), config(), {
       now: () => now + 1_000,
       nonce: () => 'nonce-b',
-      selfPath: '/tmp/awaitlingo.mjs',
+      selfPath: '/tmp/meanwhile.mjs',
       spawn: spawnTimer,
     })
 

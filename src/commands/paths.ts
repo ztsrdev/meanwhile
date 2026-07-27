@@ -13,14 +13,14 @@ export function codexHooksPath(): string {
 }
 
 export function vendoredBundlePath(): string {
-  return join(home(), 'bin', 'awaitlingo.mjs')
+  return join(home(), 'bin', 'meanwhile.mjs')
 }
 
 export function backupRoot(): string {
   return join(home(), 'backup')
 }
 
-function isAwaitlingoRoot(directory: string): boolean {
+function isMeanwhileRoot(directory: string): boolean {
   try {
     const parsed: unknown = JSON.parse(
       readFileSync(join(directory, 'package.json'), 'utf8'),
@@ -28,7 +28,7 @@ function isAwaitlingoRoot(directory: string): boolean {
     return (
       typeof parsed === 'object' &&
       parsed !== null &&
-      (parsed as { name?: unknown }).name === 'awaitlingo'
+      (parsed as { name?: unknown }).name === 'meanwhile-cli'
     )
   } catch {
     return false
@@ -38,7 +38,7 @@ function isAwaitlingoRoot(directory: string): boolean {
 export function resolveRepoRoot(moduleUrl: string = import.meta.url): string {
   let directory = dirname(fileURLToPath(moduleUrl))
   for (let depth = 0; depth < 4; depth += 1) {
-    if (isAwaitlingoRoot(directory)) {
+    if (isMeanwhileRoot(directory)) {
       return directory
     }
     const parent = dirname(directory)
@@ -49,7 +49,7 @@ export function resolveRepoRoot(moduleUrl: string = import.meta.url): string {
   }
 
   throw new Error(
-    `Unable to resolve the awaitlingo repository root from ${fileURLToPath(moduleUrl)}`,
+    `Unable to resolve the meanwhile repository root from ${fileURLToPath(moduleUrl)}`,
   )
 }
 

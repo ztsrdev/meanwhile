@@ -9,7 +9,7 @@ import {
 import { dirname, join } from 'node:path'
 import { build } from 'esbuild'
 
-const outfile = 'dist/awaitlingo.mjs'
+const outfile = 'dist/meanwhile.mjs'
 await mkdir(dirname(outfile), { recursive: true })
 const result = await build({
   entryPoints: ['src/cli.ts'],
@@ -28,7 +28,7 @@ if (result.outputFiles.length !== 1) {
 
 const temporary = join(
   dirname(outfile),
-  `.awaitlingo.mjs.${process.pid}.${randomUUID()}.tmp`,
+  `.meanwhile.mjs.${process.pid}.${randomUUID()}.tmp`,
 )
 try {
   await writeFile(temporary, result.outputFiles[0].contents, { mode: 0o755 })

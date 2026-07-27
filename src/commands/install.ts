@@ -63,7 +63,7 @@ async function installClaude(
   const plugin = await runner(executable, [
     'plugin',
     'install',
-    'awaitlingo@awaitlingo',
+    'meanwhile@meanwhile',
   ])
   if (!idempotentClaudeSuccess(plugin)) {
     io.stderr(
@@ -84,7 +84,7 @@ export function vendorBundle(
   repoRoot: string,
   destination: string = vendoredBundlePath(),
 ): void {
-  const source = join(repoRoot, 'dist', 'awaitlingo.mjs')
+  const source = join(repoRoot, 'dist', 'meanwhile.mjs')
   if (isDryRun()) {
     appendLog(`dryrun: would copy ${source} to ${destination}`)
     return
@@ -196,6 +196,6 @@ export async function runInstall(options: InstallOptions): Promise<boolean> {
   io.stdout(
     '⚠ macOS may show a one-time “wants to control Google Chrome” Automation dialog; approve it for browser switching.',
   )
-  io.stdout('Run `awaitlingo status` to verify the installation.')
+  io.stdout('Run `meanwhile status` to verify the installation.')
   return succeeded
 }

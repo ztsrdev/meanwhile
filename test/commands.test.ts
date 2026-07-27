@@ -10,6 +10,7 @@ import {
   CODEX_EVENTS,
   codexHookCommand,
   inspectCodexHooks,
+  isMeanwhileCommand,
   mergeCodexHooks,
   removeCodexHooks,
 } from '../src/commands/codex-hooks.js'
@@ -108,7 +109,7 @@ describe('Codex hook installation', () => {
 
   beforeEach(() => {
     testHome = createTestHome()
-    delete process.env.AWAITLINGO_DRYRUN
+    delete process.env.MEANWHILE_DRYRUN
     codexHome = join(testHome, 'codex')
     process.env.CODEX_HOME = codexHome
   })
@@ -129,6 +130,12 @@ describe('Codex hook installation', () => {
       expect(JSON.stringify(hooks[event])).not.toContain('"async"')
       expect(JSON.stringify(hooks[event])).toContain('"timeout":10')
     }
+  })
+
+  it('recognizes a pre-rename Codex hook command for cleanup', () => {
+    expect(
+      isMeanwhileCommand('node /legacy/awaitlingo.mjs hook --harness codex'),
+    ).toBe(true)
   })
 
   it('writes events under the "hooks" wrapper key only', () => {
@@ -180,7 +187,7 @@ describe('Codex hook installation', () => {
     for (const event of CODEX_EVENTS) {
       expect(
         hookCommands(hooks[event]).filter((command) =>
-          command.includes('awaitlingo.mjs'),
+          command.includes('meanwhile.mjs'),
         ),
       ).toHaveLength(1)
     }
@@ -202,7 +209,7 @@ describe('Codex hook installation', () => {
     })
   })
 
-  it('uninstalls only awaitlingo hook commands and creates a backup', () => {
+  it('uninstalls only meanwhile hook commands and creates a backup', () => {
     mkdirSync(codexHome, { recursive: true })
     const ours = {
       type: 'command',
@@ -231,19 +238,19 @@ describe('Codex hook installation', () => {
     expect(result.changed).toBe(true)
     expect(result.backupPath).not.toBeNull()
     expect(readFileSync(result.backupPath!, 'utf8')).toContain(
-      'awaitlingo.mjs',
+      'meanwhile.mjs',
     )
   })
 
-  it('uninstalls hooks installed from a different awaitlingo home', () => {
-    process.env.AWAITLINGO_HOME = join(testHome, 'custom-awaitlingo-home')
+  it('uninstalls hooks installed from a different meanwhile home', () => {
+    process.env.MEANWHILE_HOME = join(testHome, 'custom-meanwhile-home')
     const installedBundle = vendoredBundlePath()
     mergeCodexHooks(undefined, installedBundle)
     expect(hookCommands(readHookEvents().Stop)).toEqual([
       codexHookCommand(installedBundle),
     ])
 
-    process.env.AWAITLINGO_HOME = join(testHome, 'default-awaitlingo-home')
+    process.env.MEANWHILE_HOME = join(testHome, 'default-meanwhile-home')
     const result = removeCodexHooks()
 
     expect(result.changed).toBe(true)
@@ -277,7 +284,7 @@ describe('Codex hook installation', () => {
     expect(inspectCodexHooks().present).toBe(true)
     expect(
       hookCommands(readHookEvents().Stop).filter((command) =>
-        command.includes('awaitlingo.mjs'),
+        command.includes('meanwhile.mjs'),
       ),
     ).toHaveLength(1)
   })
@@ -288,7 +295,7 @@ describe('config commands', () => {
 
   beforeEach(() => {
     testHome = createTestHome()
-    delete process.env.AWAITLINGO_DRYRUN
+    delete process.env.MEANWHILE_DRYRUN
   })
 
   afterEach(() => {

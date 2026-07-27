@@ -60,7 +60,7 @@ export function codexHookCommand(
   return `node ${shellArgument(bundlePath)} hook --harness codex`
 }
 
-export function isAwaitlingoCommand(
+export function isMeanwhileCommand(
   command: unknown,
   bundlePath: string = vendoredBundlePath(),
 ): boolean {
@@ -71,13 +71,15 @@ export function isAwaitlingoCommand(
   const normalizedBundle = bundlePath.replaceAll('\\', '/')
   return (
     normalized.includes(normalizedBundle) ||
-    normalized.includes('.awaitlingo/bin/awaitlingo.mjs') ||
+    normalized.includes('.meanwhile/bin/meanwhile.mjs') ||
+    (normalized.includes('meanwhile.mjs') &&
+      normalized.includes('hook --harness codex')) ||
     (normalized.includes('awaitlingo.mjs') &&
       normalized.includes('hook --harness codex'))
   )
 }
 
-function filterAwaitlingoHooks(
+function filterMeanwhileHooks(
   groups: unknown,
   bundlePath: string,
 ): { groups: unknown; found: boolean } {
@@ -95,7 +97,7 @@ function filterAwaitlingoHooks(
 
     const hooks = group.hooks.filter((hook) => {
       const ours =
-        isRecord(hook) && isAwaitlingoCommand(hook.command, bundlePath)
+        isRecord(hook) && isMeanwhileCommand(hook.command, bundlePath)
       found ||= ours
       return !ours
     })
@@ -156,7 +158,7 @@ export function mergeCodexHooks(
 
   const command = codexHookCommand(bundlePath)
   for (const event of CODEX_EVENTS) {
-    const filtered = filterAwaitlingoHooks(container[event], bundlePath)
+    const filtered = filterMeanwhileHooks(container[event], bundlePath)
     const groups = Array.isArray(filtered.groups) ? filtered.groups : []
     container[event] = [
       ...groups,
@@ -201,7 +203,7 @@ export function removeCodexHooks(
       if (scope === root && event === 'hooks') {
         continue
       }
-      const filtered = filterAwaitlingoHooks(scope[event], bundlePath)
+      const filtered = filterMeanwhileHooks(scope[event], bundlePath)
       if (filtered.found) {
         scope[event] = filtered.groups
         changed = true
@@ -257,7 +259,7 @@ export function inspectCodexHooks(
         present,
         events,
         error:
-          'legacy unwrapped hooks layout detected (Codex ignores it); run `awaitlingo install` to repair',
+          'legacy unwrapped hooks layout detected (Codex ignores it); run `meanwhile install` to repair',
       }
     }
     return { present, events }

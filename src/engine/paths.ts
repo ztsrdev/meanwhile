@@ -4,7 +4,7 @@ import { join } from 'node:path'
 const SESSION_ID_PATTERN = /^[A-Za-z0-9._-]+$/
 
 export function home(): string {
-  return process.env.AWAITLINGO_HOME ?? join(os.homedir(), '.awaitlingo')
+  return process.env.MEANWHILE_HOME ?? join(os.homedir(), '.meanwhile')
 }
 
 export function configPath(): string {
@@ -35,5 +35,5 @@ export function logDir(): string {
 }
 
 export function logPath(): string {
-  return join(logDir(), 'awaitlingo.log')
+  return join(logDir(), 'meanwhile.log')
 }
