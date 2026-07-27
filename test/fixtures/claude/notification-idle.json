@@ -1,0 +1,10 @@
+{
+  "session_id": "550e8400-e29b-41d4-a716-446655440000",
+  "transcript_path": "/tmp/t.jsonl",
+  "cwd": "/tmp/proj",
+  "permission_mode": "default",
+  "hook_event_name": "Notification",
+  "notification_type": "idle_prompt",
+  "message": "Claude is waiting for your input",
+  "title": "Input needed"
+}
