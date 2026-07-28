@@ -41,7 +41,7 @@ Some details that matter in practice:
 
 ## Install
 
-You need macOS and Node.js 20 or newer.
+You need Node.js 20 or newer. macOS and Linux are supported. Windows support is experimental.
 
 ```sh
 git clone https://github.com/ztsrdev/meanwhile.git
@@ -66,10 +66,11 @@ claude --plugin-dir /path/to/meanwhile
 | Claude Code | Yes | Installed as a plugin; your `settings.json` is never edited. Pulls back on finish, permission prompts, and idle waits. |
 | Codex CLI | Yes, minus idle detection | Native hooks in `~/.codex/hooks.json`. Pulls back on turn end and permission requests. |
 | Conductor | Yes, automatic | Works through the Claude plugin with no extra setup. Pull-back brings Conductor forward, and meanwhile mutes its own alerts since Conductor has sounds of its own. |
-| Codex inside Conductor | Not yet | Planned for v0.3. |
-| Linux / Windows | Not yet | Linux is planned for v0.2, Windows for v0.4. |
+| Codex inside Conductor | Yes | Works through the same user-level Codex hooks; verified against Conductor's own hook injection. Trust the hooks once with `/hooks` in any Codex session. |
+| Linux | Yes | Full behavior on X11. On Wayland the site opens and notifications work, but focus reading and pull-back activation are not possible. See [docs/linux.md](docs/linux.md). |
+| Windows | Experimental | Opens the site and tries to activate your app; Windows may block focus changes. See [docs/windows.md](docs/windows.md). |
 
-Per-harness detail: [Claude Code](docs/claude-code.md) · [Codex](docs/codex.md) · [Conductor](docs/conductor.md)
+Per-harness and platform detail: [Claude Code](docs/claude-code.md) · [Codex](docs/codex.md) · [Conductor](docs/conductor.md) · [Linux](docs/linux.md) · [Windows](docs/windows.md)
 
 ## Settings
 

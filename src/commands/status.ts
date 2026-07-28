@@ -126,6 +126,52 @@ async function reportAutomationProbe(
   }
 }
 
+async function reportLinuxTool(
+  tool: string,
+  runner: ProcessRunner,
+  io: CommandIO,
+): Promise<void> {
+  const result = await runner('which', [tool])
+  if (result.skipped) {
+    io.stdout(`⚠ Linux tool ${tool}: PATH check skipped (dry-run)`)
+  } else if (result.exitCode === 0) {
+    io.stdout(`✓ Linux tool ${tool}: on PATH`)
+  } else {
+    io.stdout(`✗ Linux tool ${tool}: not found on PATH`)
+  }
+}
+
+async function reportPlatform(
+  runner: ProcessRunner,
+  io: CommandIO,
+): Promise<void> {
+  if (process.platform === 'linux') {
+    if (process.env.WAYLAND_DISPLAY !== undefined) {
+      io.stdout(
+        '⚠ Linux display: Wayland; window detection and activation are unavailable',
+      )
+    } else if (process.env.DISPLAY) {
+      io.stdout('✓ Linux display: X11; window control is available with X11 tools')
+    } else {
+      io.stdout(
+        '✗ Linux display: no X11 display detected; window detection and activation are unavailable',
+      )
+    }
+    for (const tool of [
+      'xdg-open',
+      'xdotool',
+      'wmctrl',
+      'notify-send',
+    ]) {
+      await reportLinuxTool(tool, runner, io)
+    }
+  } else if (process.platform === 'win32') {
+    io.stdout(
+      '⚠ Windows platform: experimental; application activation is best effort',
+    )
+  }
+}
+
 export async function runStatus(options: StatusOptions = {}): Promise<void> {
   const io = options.io ?? consoleIO
   const runner = options.runner ?? runExternal
@@ -181,6 +227,7 @@ export async function runStatus(options: StatusOptions = {}): Promise<void> {
       io.stdout('✓ Away marker: none')
     }
 
+    await reportPlatform(runner, io)
     await reportAutomationProbe(io)
   } catch (error) {
     io.stdout(`⚠ Status report incomplete: ${String(error)}`)

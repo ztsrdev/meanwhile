@@ -85,12 +85,26 @@ function dryRunActions(log: string): DryRunAction[] {
 }
 
 function openActions(log: string): DryRunAction[] {
-  return dryRunActions(log).filter(
-    (record) =>
-      record.action === 'execFile' &&
-      (record.command === 'open' || record.command === 'xdg-open') &&
-      record.args?.includes(awayUrl),
-  )
+  return dryRunActions(log).filter((record) => {
+    if (record.action !== 'execFile' || !Array.isArray(record.args)) {
+      return false
+    }
+    const includesAwayUrl = record.args.some(
+      (arg) => typeof arg === 'string' && arg.includes(awayUrl),
+    )
+    if (!includesAwayUrl) {
+      return false
+    }
+    if (record.command === 'open' || record.command === 'xdg-open') {
+      return true
+    }
+    return (
+      record.command === 'cmd' &&
+      record.args[0] === '/c' &&
+      record.args[1] === 'start' &&
+      record.args[2] === ''
+    )
+  })
 }
 
 function activationActions(log: string, bundleId: string): DryRunAction[] {
@@ -243,6 +257,43 @@ function expectSilentSuccess(result: CommandResult): void {
   expect(result.stdout).toBe('')
 }
 
+function expectSessionSettled(home: string, sessionId: string): void {
+  const directory = sessionDirectory(home, sessionId)
+  expect(
+    readJson<{ busySince: number | null }>(
+      join(directory, 'meta.json'),
+    ).busySince,
+  ).toBeNull()
+  expect(existsSync(join(directory, 'pending'))).toBe(false)
+  expect(existsSync(join(directory, 'fired'))).toBe(false)
+  expect(existsSync(join(directory, 'cancelled'))).toBe(false)
+}
+
+function expectPulledBack(
+  log: string,
+  home: string,
+  target: string,
+  settledSessionIds: readonly string[],
+): void {
+  if (process.platform === 'darwin') {
+    expect(activationActions(log, target)).toHaveLength(1)
+    return
+  }
+
+  expect(existsSync(join(home, 'state', 'away.json'))).toBe(false)
+  for (const sessionId of settledSessionIds) {
+    expectSessionSettled(home, sessionId)
+  }
+}
+
+function expectNotificationAction(log: string, body: string): void {
+  if (process.platform === 'win32') {
+    expect(notificationActions(log, body)).toHaveLength(0)
+    return
+  }
+  expect(notificationActions(log, body)).toHaveLength(1)
+}
+
 async function waitFor(
   predicate: () => boolean,
   description: string,
@@ -357,9 +408,8 @@ describe('built bundle lifecycle', () => {
     expectSilentSuccess(await runFixture(home, 'claude', 'stop.json'))
 
     const log = readLog(home)
-    expect(activationActions(log, 'com.example.editor')).toHaveLength(1)
-    expect(notificationActions(log, 'Your coding agent is ready.'))
-      .toHaveLength(1)
+    expectPulledBack(log, home, 'com.example.editor', [claudeSession])
+    expectNotificationAction(log, 'Your coding agent is ready.')
     expect(existsSync(join(home, 'state', 'away.json'))).toBe(false)
     expect(existsSync(join(directory, 'fired'))).toBe(false)
     expect(readJson<{ busySince: number | null }>(join(directory, 'meta.json')).busySince)
@@ -387,9 +437,11 @@ describe('built bundle lifecycle', () => {
 
     expectSilentSuccess(await runFixture(home, 'codex', 'stop.json'))
     log = readLog(home)
-    expect(activationActions(log, 'com.example.editor')).toHaveLength(1)
-    expect(notificationActions(log, 'Your coding agent is ready.'))
-      .toHaveLength(1)
+    expectPulledBack(log, home, 'com.example.editor', [
+      claudeSession,
+      codexSession,
+    ])
+    expectNotificationAction(log, 'Your coding agent is ready.')
     expect(existsSync(join(home, 'state', 'away.json'))).toBe(false)
     expect(
       readJson<{ busySince: number | null }>(
@@ -417,9 +469,8 @@ describe('built bundle lifecycle', () => {
     expectSilentSuccess(await runFixture(home, 'claude', 'stop.json'))
 
     const log = readLog(home)
-    expect(activationActions(log, 'com.example.editor')).toHaveLength(1)
-    expect(notificationActions(log, 'Your coding agent is ready.'))
-      .toHaveLength(1)
+    expectPulledBack(log, home, 'com.example.editor', [claudeSession])
+    expectNotificationAction(log, 'Your coding agent is ready.')
     expect(existsSync(join(home, 'state', 'away.json'))).toBe(false)
     expect(
       readJson<{ busySince: number | null }>(
@@ -444,9 +495,8 @@ describe('built bundle lifecycle', () => {
     )
 
     const log = readLog(home)
-    expect(activationActions(log, 'com.example.editor')).toHaveLength(1)
-    expect(notificationActions(log, 'Your coding agent needs input.'))
-      .toHaveLength(1)
+    expectPulledBack(log, home, 'com.example.editor', [claudeSession])
+    expectNotificationAction(log, 'Your coding agent needs input.')
     expect(existsSync(join(home, 'state', 'away.json'))).toBe(false)
     expect(
       readJson<{ busySince: number | null }>(
@@ -588,7 +638,7 @@ describe('built bundle lifecycle', () => {
     )
 
     const log = readLog(home)
-    expect(activationActions(log, 'com.conductor.app')).toHaveLength(1)
+    expectPulledBack(log, home, 'com.conductor.app', [claudeSession])
     expect(notificationActions(log)).toHaveLength(0)
     expect(soundActions(log)).toHaveLength(0)
     expect(existsSync(join(home, 'state', 'away.json'))).toBe(false)

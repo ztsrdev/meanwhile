@@ -8,7 +8,12 @@ import { dirname, join } from 'node:path'
 import { isDryRun } from '../engine/env.js'
 import { atomicWriteFile } from '../engine/fs.js'
 import { appendLog } from '../engine/log.js'
-import { backupRoot, codexHooksPath, vendoredBundlePath } from './paths.js'
+import {
+  backupRoot,
+  backupTimestamp,
+  codexHooksPath,
+  vendoredBundlePath,
+} from './paths.js'
 
 export const CODEX_EVENTS = [
   'UserPromptSubmit',
@@ -117,7 +122,7 @@ export function backupCodexHooks(
   }
   const destination = join(
     backupRoot(),
-    timestamp.toISOString(),
+    backupTimestamp(timestamp),
     'hooks.json',
   )
   if (isDryRun()) {

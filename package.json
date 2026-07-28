@@ -1,6 +1,6 @@
 {
   "name": "meanwhile-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Open any site while your coding agent works, then get pulled back when it needs you. Hooks for Claude Code, Codex, and Conductor.",
   "license": "MIT",
   "author": "ZepaMK",

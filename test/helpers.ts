@@ -44,10 +44,14 @@ export function ensureFreshBundle(): void {
     return
   }
 
-  const result = spawnSync('npm', ['run', 'bundle'], {
-    cwd: root,
-    encoding: 'utf8',
-  })
+  const result = spawnSync(
+    process.execPath,
+    [join(root, 'scripts', 'bundle.mjs')],
+    {
+      cwd: root,
+      encoding: 'utf8',
+    },
+  )
   if (result.status !== 0) {
     throw new Error(`Bundle build failed: ${result.stderr || result.stdout}`)
   }

@@ -232,7 +232,19 @@ var BROWSER_BUNDLE_IDS = /* @__PURE__ */ new Set([
   "com.microsoft.edgemac",
   "company.thebrowser.Browser",
   "com.brave.Browser",
-  "com.vivaldi.Vivaldi"
+  "com.vivaldi.Vivaldi",
+  "google-chrome.Google-chrome",
+  "chromium.Chromium",
+  "Navigator.firefox",
+  "brave-browser.Brave-browser",
+  "vivaldi-stable.Vivaldi-stable",
+  "microsoft-edge.Microsoft-edge",
+  "chrome",
+  "chromium",
+  "firefox",
+  "brave",
+  "vivaldi",
+  "msedge"
 ]);
 
 // src/engine/away.ts
@@ -535,7 +547,7 @@ function onPromptSubmit(ev, cfg, deps = {}) {
       "--delay",
       String(cfg.delaySeconds)
     ],
-    { detached: true, stdio: "ignore" }
+    { detached: true, stdio: "ignore", windowsHide: true }
   ).unref();
 }
 async function onTimerFire(sessionId, nonce, cfg, platform) {
@@ -716,8 +728,304 @@ async function execute(command, args, options) {
   }
 }
 
-// src/platform/index.ts
+// src/platform/linux.ts
 var EXEC_TIMEOUT_MS = 5e3;
+var COMPLETE_SOUND = "/usr/share/sounds/freedesktop/stereo/complete.oga";
+var CHROME_COMMANDS = ["google-chrome", "chromium"];
+function failed(result) {
+  return result.stderr.trim() || `exit ${result.exitCode}`;
+}
+function isX11Session(environment = process.env) {
+  return Boolean(environment.DISPLAY) && environment.WAYLAND_DISPLAY === void 0;
+}
+function parseWmClass(output) {
+  const match = output.match(
+    /^\s*WM_CLASS(?:\([^)]*\))?\s*=\s*(.+?)\s*$/m
+  );
+  if (!match?.[1]) {
+    return null;
+  }
+  const values = [];
+  const quoted = /"((?:\\.|[^"\\])*)"/g;
+  for (const value of match[1].matchAll(quoted)) {
+    values.push(
+      (value[1] ?? "").replaceAll('\\"', '"').replaceAll("\\\\", "\\")
+    );
+  }
+  if (values.length >= 2 && values[0] && values[1]) {
+    return `${values[0]}.${values[1]}`;
+  }
+  const unquoted = match[1].split(",").map((value) => value.trim().replace(/^"|"$/g, ""));
+  return unquoted.length >= 2 && unquoted[0] && unquoted[1] ? `${unquoted[0]}.${unquoted[1]}` : null;
+}
+var LinuxPlatform = class {
+  constructor(executeCommand = execute) {
+    this.executeCommand = executeCommand;
+  }
+  async run(command, args, dryRunDescription) {
+    return this.executeCommand(command, args, {
+      timeoutMs: EXEC_TIMEOUT_MS,
+      dryRunDescription: dryRunDescription ?? {
+        action: "execFile",
+        summary: [command, ...args].join(" ")
+      }
+    });
+  }
+  async hasTool(command) {
+    const result = await this.run("which", [command], {
+      action: "which",
+      summary: `which ${command}`,
+      details: { tool: command }
+    });
+    return result.skipped || result.exitCode === 0;
+  }
+  async openWithXdg(url) {
+    if (!await this.hasTool("xdg-open")) {
+      appendLog("platform: xdg-open is unavailable; URL was not opened");
+      return;
+    }
+    const result = await this.run("xdg-open", [url]);
+    if (result.exitCode !== 0) {
+      appendLog(`platform: xdg-open failed: ${failed(result)}`);
+    }
+  }
+  async openOrFocusUrl(url, browser) {
+    if (browser !== "chrome") {
+      await this.openWithXdg(url);
+      return;
+    }
+    for (const command of CHROME_COMMANDS) {
+      if (!await this.hasTool(command)) {
+        continue;
+      }
+      const result = await this.run(command, [url]);
+      if (result.exitCode === 0) {
+        return;
+      }
+      appendLog(`platform: ${command} failed: ${failed(result)}`);
+    }
+    await this.openWithXdg(url);
+  }
+  async frontmostBundleId() {
+    if (!isX11Session()) {
+      appendLog(
+        "platform: frontmost window detection is unavailable outside X11"
+      );
+      return null;
+    }
+    if (!await this.hasTool("xdotool")) {
+      appendLog(
+        "platform: frontmost window detection needs xdotool; returning null"
+      );
+      return null;
+    }
+    if (!await this.hasTool("xprop")) {
+      appendLog(
+        "platform: frontmost window detection needs xprop; returning null"
+      );
+      return null;
+    }
+    const active = await this.run("xdotool", ["getactivewindow"]);
+    if (active.exitCode !== 0) {
+      appendLog(
+        `platform: unable to read the active X11 window: ${failed(active)}`
+      );
+      return null;
+    }
+    const windowId = active.skipped ? "<active-window>" : active.stdout.trim().split(/\s+/, 1)[0];
+    if (!windowId) {
+      appendLog("platform: xdotool returned no active X11 window");
+      return null;
+    }
+    const property = await this.run("xprop", [
+      "-id",
+      windowId,
+      "WM_CLASS"
+    ]);
+    if (property.exitCode !== 0) {
+      appendLog(
+        `platform: unable to read the active window WM_CLASS: ${failed(property)}`
+      );
+      return null;
+    }
+    if (property.skipped) {
+      return null;
+    }
+    const wmClass = parseWmClass(property.stdout);
+    if (wmClass === null) {
+      appendLog("platform: active X11 window has no parseable WM_CLASS");
+    }
+    return wmClass;
+  }
+  async activateApp(target) {
+    if (!isX11Session()) {
+      appendLog("platform: application activation is unavailable outside X11");
+      return;
+    }
+    if (await this.hasTool("wmctrl")) {
+      const result = await this.run("wmctrl", ["-x", "-a", target]);
+      if (result.exitCode !== 0) {
+        appendLog(
+          `platform: wmctrl could not activate ${target}: ${failed(result)}`
+        );
+      }
+      return;
+    }
+    if (!await this.hasTool("xdotool")) {
+      appendLog(
+        "platform: application activation needs wmctrl or xdotool; no-op"
+      );
+      return;
+    }
+    const search = await this.run("xdotool", [
+      "search",
+      "--class",
+      target
+    ]);
+    if (search.exitCode !== 0) {
+      appendLog(
+        `platform: xdotool could not find ${target}: ${failed(search)}`
+      );
+      return;
+    }
+    const windowId = search.skipped ? "<matching-window>" : search.stdout.trim().split(/\s+/, 1)[0];
+    if (!windowId) {
+      appendLog(`platform: xdotool found no window for ${target}`);
+      return;
+    }
+    const activation = await this.run("xdotool", [
+      "windowactivate",
+      windowId
+    ]);
+    if (activation.exitCode !== 0) {
+      appendLog(
+        `platform: xdotool could not activate ${target}: ${failed(activation)}`
+      );
+    }
+  }
+  async notify(title, body) {
+    if (!await this.hasTool("notify-send")) {
+      appendLog("platform: notify-send is unavailable; notification skipped");
+      return;
+    }
+    const result = await this.run("notify-send", [title, body], {
+      action: "notify",
+      summary: `notify ${title}: ${body}`,
+      details: { title, body }
+    });
+    if (result.exitCode !== 0) {
+      appendLog(`platform: notify-send failed: ${failed(result)}`);
+    }
+  }
+  async playSound() {
+    if (!await this.hasTool("paplay")) {
+      appendLog("platform: paplay is unavailable; sound skipped");
+      return;
+    }
+    const result = await this.run("paplay", [COMPLETE_SOUND], {
+      action: "playSound",
+      summary: `playSound ${COMPLETE_SOUND}`
+    });
+    if (result.exitCode !== 0) {
+      appendLog(`platform: paplay failed: ${failed(result)}`);
+    }
+  }
+};
+
+// src/platform/windows.ts
+var EXEC_TIMEOUT_MS2 = 5e3;
+var FOREGROUND_PROCESS_SCRIPT = [
+  `Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class MeanwhileUser32 { [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow(); [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId); }'`,
+  "[uint32]$foregroundProcessId = 0",
+  "$window = [MeanwhileUser32]::GetForegroundWindow()",
+  "if ($window -eq [IntPtr]::Zero) { exit 1 }",
+  "[void][MeanwhileUser32]::GetWindowThreadProcessId($window, [ref]$foregroundProcessId)",
+  "if ($foregroundProcessId -eq 0) { exit 1 }",
+  "(Get-Process -Id $foregroundProcessId -ErrorAction Stop).ProcessName"
+].join("; ");
+function failed2(result) {
+  return result.stderr.trim() || `exit ${result.exitCode}`;
+}
+function quoteCmdArgument(value) {
+  const singleLine = value.replaceAll("\r", "%0D").replaceAll("\n", "%0A");
+  return `"${singleLine.replaceAll('"', '""')}"`;
+}
+function escapePowerShellSingleQuoted(value) {
+  return value.replaceAll("'", "''");
+}
+function buildAppActivateScript(target) {
+  const escaped = escapePowerShellSingleQuoted(target);
+  return [
+    `$target = '${escaped}'`,
+    "$shell = New-Object -ComObject WScript.Shell",
+    "if (-not $shell.AppActivate($target)) { exit 1 }"
+  ].join("; ");
+}
+var WindowsPlatform = class {
+  constructor(executeCommand = execute) {
+    this.executeCommand = executeCommand;
+  }
+  async run(command, args, dryRunDescription) {
+    return this.executeCommand(command, args, {
+      timeoutMs: EXEC_TIMEOUT_MS2,
+      dryRunDescription: dryRunDescription ?? {
+        action: "execFile",
+        summary: [command, ...args].join(" ")
+      }
+    });
+  }
+  async openOrFocusUrl(url, _browser) {
+    const result = await this.run("cmd", [
+      "/c",
+      "start",
+      "",
+      quoteCmdArgument(url)
+    ]);
+    if (result.exitCode !== 0) {
+      appendLog(`platform: cmd could not open the URL: ${failed2(result)}`);
+    }
+  }
+  async frontmostBundleId() {
+    const result = await this.run("powershell.exe", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      FOREGROUND_PROCESS_SCRIPT
+    ]);
+    if (result.exitCode !== 0) {
+      appendLog(
+        `platform: unable to read the foreground Windows process: ${failed2(result)}`
+      );
+      return null;
+    }
+    if (result.skipped) {
+      return null;
+    }
+    return result.stdout.trim().split(/\r?\n/, 1)[0] || null;
+  }
+  async activateApp(target) {
+    const result = await this.run("powershell.exe", [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      buildAppActivateScript(target)
+    ]);
+    if (result.exitCode !== 0) {
+      appendLog(
+        `platform: best-effort activation of ${target} failed: ${failed2(result)}`
+      );
+    }
+  }
+  async notify(_title, _body) {
+    appendLog("platform: Windows notifications are unavailable; no-op");
+  }
+  async playSound() {
+    appendLog("platform: Windows sound playback is unavailable; no-op");
+  }
+};
+
+// src/platform/index.ts
+var EXEC_TIMEOUT_MS3 = 5e3;
 var CHROME_RUNNING_SCRIPT = 'application "Google Chrome" is running';
 var FRONTMOST_APP_SCRIPT = 'tell application "System Events" to get bundle identifier of (first application process whose frontmost is true)';
 function errorMessage(error) {
@@ -732,7 +1040,7 @@ async function invoke(command, args, dryRunDescription) {
     summary: [command, ...args].join(" ")
   };
   const result = await execute(command, args, {
-    timeoutMs: EXEC_TIMEOUT_MS,
+    timeoutMs: EXEC_TIMEOUT_MS3,
     dryRunDescription: description
   });
   if (result.exitCode !== 0) {
@@ -939,14 +1247,23 @@ var NonDarwinPlatform = class {
   }
 };
 function getPlatform() {
-  return process.platform === "darwin" ? new DarwinPlatform() : new NonDarwinPlatform();
+  switch (process.platform) {
+    case "darwin":
+      return new DarwinPlatform();
+    case "linux":
+      return new LinuxPlatform();
+    case "win32":
+      return new WindowsPlatform();
+    default:
+      return new NonDarwinPlatform();
+  }
 }
 async function probeAutomation() {
   if (process.platform !== "darwin") {
     return "not-applicable";
   }
   const result = await execute("osascript", ["-e", FRONTMOST_APP_SCRIPT], {
-    timeoutMs: EXEC_TIMEOUT_MS
+    timeoutMs: EXEC_TIMEOUT_MS3
   });
   if (result.skipped) {
     return "skipped";
@@ -983,6 +1300,9 @@ function vendoredBundlePath() {
 }
 function backupRoot() {
   return join5(home(), "backup");
+}
+function backupTimestamp(timestamp) {
+  return timestamp.toISOString().replace(/[:.]/g, "-");
 }
 function isMeanwhileRoot(directory) {
   try {
@@ -1187,7 +1507,7 @@ function backupCodexHooks(sourcePath = codexHooksPath(), timestamp = /* @__PURE_
   }
   const destination = join6(
     backupRoot(),
-    timestamp.toISOString(),
+    backupTimestamp(timestamp),
     "hooks.json"
   );
   if (isDryRun()) {
@@ -1550,7 +1870,7 @@ async function runUninstall(options) {
 import { existsSync as existsSync5 } from "node:fs";
 
 // src/commands/version.ts
-var VERSION = "0.1.0";
+var VERSION = "0.2.0";
 
 // src/commands/status.ts
 function formatAge(milliseconds) {
@@ -1640,6 +1960,43 @@ async function reportAutomationProbe(io) {
       break;
   }
 }
+async function reportLinuxTool(tool, runner, io) {
+  const result = await runner("which", [tool]);
+  if (result.skipped) {
+    io.stdout(`\u26A0 Linux tool ${tool}: PATH check skipped (dry-run)`);
+  } else if (result.exitCode === 0) {
+    io.stdout(`\u2713 Linux tool ${tool}: on PATH`);
+  } else {
+    io.stdout(`\u2717 Linux tool ${tool}: not found on PATH`);
+  }
+}
+async function reportPlatform(runner, io) {
+  if (process.platform === "linux") {
+    if (process.env.WAYLAND_DISPLAY !== void 0) {
+      io.stdout(
+        "\u26A0 Linux display: Wayland; window detection and activation are unavailable"
+      );
+    } else if (process.env.DISPLAY) {
+      io.stdout("\u2713 Linux display: X11; window control is available with X11 tools");
+    } else {
+      io.stdout(
+        "\u2717 Linux display: no X11 display detected; window detection and activation are unavailable"
+      );
+    }
+    for (const tool of [
+      "xdg-open",
+      "xdotool",
+      "wmctrl",
+      "notify-send"
+    ]) {
+      await reportLinuxTool(tool, runner, io);
+    }
+  } else if (process.platform === "win32") {
+    io.stdout(
+      "\u26A0 Windows platform: experimental; application activation is best effort"
+    );
+  }
+}
 async function runStatus(options = {}) {
   const io = options.io ?? consoleIO;
   const runner = options.runner ?? runExternal;
@@ -1687,6 +2044,7 @@ async function runStatus(options = {}) {
     } else {
       io.stdout("\u2713 Away marker: none");
     }
+    await reportPlatform(runner, io);
     await reportAutomationProbe(io);
   } catch (error) {
     io.stdout(`\u26A0 Status report incomplete: ${String(error)}`);

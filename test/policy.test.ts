@@ -196,4 +196,39 @@ describe('pull-back policy', () => {
       'activateApp com.conductor.app',
     ])
   })
+
+  it('handles a Codex event under Conductor and suppresses alerts', async () => {
+    const now = Date.now()
+    setBusy('codex-session', 'codex', '/workspace', now)
+    armPending('codex-session', 'codex-nonce', now)
+    expect(
+      tryTransition(
+        'codex-session',
+        'pending',
+        'fired',
+        'codex-nonce',
+      ),
+    ).toBe(true)
+    writeAway({
+      owner: 'codex-session',
+      prevApp: 'com.example.editor',
+      since: now,
+    })
+    process.env.CONDUCTOR_SESSION_ID = 'conductor-session'
+    process.env.CONDUCTOR_IS_LOCAL = '1'
+    const platform = new DryRunPlatform()
+    const cfg = config('any-finishes')
+    cfg.pullBack.sound = true
+
+    await onStop(
+      event('codex-session', 'stop', { harness: 'codex' }),
+      cfg,
+      platform,
+    )
+
+    expect(platform.actions).toEqual([
+      'frontmost',
+      'activateApp com.conductor.app',
+    ])
+  })
 })

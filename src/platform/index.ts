@@ -3,6 +3,11 @@ import { execute, type DryRunDescription } from '../engine/exec.js'
 import { isDryRun } from '../engine/env.js'
 import type { Config } from '../types.js'
 import { appendLog } from '../engine/log.js'
+import { LinuxPlatform } from './linux.js'
+import { WindowsPlatform } from './windows.js'
+
+export { LinuxPlatform } from './linux.js'
+export { WindowsPlatform } from './windows.js'
 
 const EXEC_TIMEOUT_MS = 5_000
 const CHROME_RUNNING_SCRIPT = 'application "Google Chrome" is running'
@@ -268,7 +273,16 @@ export class NonDarwinPlatform implements Platform {
 }
 
 export function getPlatform(): Platform {
-  return process.platform === 'darwin' ? new DarwinPlatform() : new NonDarwinPlatform()
+  switch (process.platform) {
+    case 'darwin':
+      return new DarwinPlatform()
+    case 'linux':
+      return new LinuxPlatform()
+    case 'win32':
+      return new WindowsPlatform()
+    default:
+      return new NonDarwinPlatform()
+  }
 }
 
 export type AutomationProbeResult =

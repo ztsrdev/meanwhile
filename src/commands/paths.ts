@@ -20,6 +20,10 @@ export function backupRoot(): string {
   return join(home(), 'backup')
 }
 
+export function backupTimestamp(timestamp: Date): string {
+  return timestamp.toISOString().replace(/[:.]/g, '-')
+}
+
 function isMeanwhileRoot(directory: string): boolean {
   try {
     const parsed: unknown = JSON.parse(
