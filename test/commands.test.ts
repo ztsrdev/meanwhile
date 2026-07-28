@@ -4,9 +4,10 @@ import {
   readFileSync,
   writeFileSync,
 } from 'node:fs'
-import { join } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
+  backupCodexHooks,
   CODEX_EVENTS,
   codexHookCommand,
   inspectCodexHooks,
@@ -177,6 +178,21 @@ describe('Codex hook installation', () => {
     expect(Object.keys(readHooks())).toEqual(['hooks'])
     expect(result.backupPath).not.toBeNull()
     expect(readFileSync(result.backupPath!, 'utf8')).toContain('foreign-hook')
+  })
+
+  it('uses a filesystem-safe timestamp for backup directories', () => {
+    mkdirSync(codexHome, { recursive: true })
+    writeFileSync(codexHooksPath(), '{}', 'utf8')
+
+    const backupPath = backupCodexHooks(
+      codexHooksPath(),
+      new Date('2026-07-28T09:34:07.551Z'),
+    )
+
+    expect(backupPath).not.toBeNull()
+    const backupSegment = basename(dirname(backupPath!))
+    expect(backupSegment).toBe('2026-07-28T09-34-07-551Z')
+    expect(backupSegment).not.toContain(':')
   })
 
   it('replaces its own entries on reinstall without duplicates', () => {
@@ -354,11 +370,15 @@ describe('config commands', () => {
 describe('top-level commands', () => {
   let testHome: string
   let previousPath: string | undefined
+  let previousDisplay: string | undefined
+  let previousWaylandDisplay: string | undefined
 
   beforeEach(() => {
     testHome = createTestHome()
     process.env.CODEX_HOME = join(testHome, 'codex')
     previousPath = process.env.PATH
+    previousDisplay = process.env.DISPLAY
+    previousWaylandDisplay = process.env.WAYLAND_DISPLAY
   })
 
   afterEach(() => {
@@ -367,6 +387,16 @@ describe('top-level commands', () => {
       delete process.env.PATH
     } else {
       process.env.PATH = previousPath
+    }
+    if (previousDisplay === undefined) {
+      delete process.env.DISPLAY
+    } else {
+      process.env.DISPLAY = previousDisplay
+    }
+    if (previousWaylandDisplay === undefined) {
+      delete process.env.WAYLAND_DISPLAY
+    } else {
+      process.env.WAYLAND_DISPLAY = previousWaylandDisplay
     }
     delete process.env.CODEX_HOME
     removeTestHome(testHome)
@@ -505,6 +535,72 @@ describe('top-level commands', () => {
 
     expect(output.stdout).toContain(
       'Automation probe: not applicable (macOS only)',
+    )
+  })
+
+  it('reports the Linux display mode and tool availability', async () => {
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
+    process.env.DISPLAY = ':0'
+    delete process.env.WAYLAND_DISPLAY
+    const emptyPath = join(testHome, 'empty-path')
+    mkdirSync(emptyPath)
+    process.env.PATH = emptyPath
+    const output = recordingIO()
+    const available = new Set(['xdg-open', 'wmctrl', 'notify-send'])
+
+    await runStatus({
+      io: output.io,
+      runner: async (command, args) =>
+        command === 'which' && available.has(args[0] ?? '')
+          ? {
+              stdout: `/fake/bin/${args[0]}\n`,
+              stderr: '',
+              exitCode: 0,
+              skipped: false,
+            }
+          : {
+              stdout: '',
+              stderr: 'not found',
+              exitCode: 1,
+              skipped: false,
+            },
+    })
+
+    expect(output.stdout).toContain(
+      '✓ Linux display: X11; window control is available with X11 tools',
+    )
+    expect(output.stdout).toContain('✓ Linux tool xdg-open: on PATH')
+    expect(output.stdout).toContain('✗ Linux tool xdotool: not found on PATH')
+    expect(output.stdout).toContain('✓ Linux tool wmctrl: on PATH')
+    expect(output.stdout).toContain('✓ Linux tool notify-send: on PATH')
+  })
+
+  it('reports Wayland limits and experimental Windows support', async () => {
+    const emptyPath = join(testHome, 'empty-path')
+    mkdirSync(emptyPath)
+    process.env.PATH = emptyPath
+    const runner = async () => ({
+      stdout: '',
+      stderr: '',
+      exitCode: 1,
+      skipped: false,
+    })
+
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('linux')
+    process.env.DISPLAY = ':0'
+    process.env.WAYLAND_DISPLAY = 'wayland-0'
+    const linuxOutput = recordingIO()
+    await runStatus({ io: linuxOutput.io, runner })
+    expect(linuxOutput.stdout).toContain(
+      '⚠ Linux display: Wayland; window detection and activation are unavailable',
+    )
+
+    vi.restoreAllMocks()
+    vi.spyOn(process, 'platform', 'get').mockReturnValue('win32')
+    const windowsOutput = recordingIO()
+    await runStatus({ io: windowsOutput.io, runner })
+    expect(windowsOutput.stdout).toContain(
+      '⚠ Windows platform: experimental; application activation is best effort',
     )
   })
 })

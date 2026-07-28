@@ -141,7 +141,7 @@ export function onPromptSubmit(
       '--delay',
       String(cfg.delaySeconds),
     ],
-    { detached: true, stdio: 'ignore' },
+    { detached: true, stdio: 'ignore', windowsHide: true },
   ).unref()
 }
 

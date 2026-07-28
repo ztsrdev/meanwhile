@@ -31,6 +31,8 @@ After installation:
 
 Until this approval, Codex silently no-ops the entries. If Claude works but Codex does nothing, check trust first.
 
+Codex also works inside Conductor as of meanwhile v0.2. See [Conductor](conductor.md) for hook merging, trust, session identity, and pull-back behavior.
+
 ## What the installer leaves alone
 
 meanwhile does not edit `~/.codex/config.toml`. It does not replace or wrap your `notify` setting. Uninstall removes only entries identified as meanwhile's.

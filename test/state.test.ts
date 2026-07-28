@@ -136,5 +136,15 @@ describe('session state', () => {
 
     expect(existsSync(secondStale)).toBe(true)
     expect(spawnTimer).toHaveBeenCalledTimes(2)
+    expect(spawnTimer).toHaveBeenNthCalledWith(
+      1,
+      expect.any(String),
+      expect.any(Array),
+      expect.objectContaining({
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true,
+      }),
+    )
   })
 })

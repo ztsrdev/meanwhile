@@ -1,14 +1,25 @@
 import { readFileSync } from 'node:fs'
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest'
 import { logPath } from '../src/engine/paths.js'
 import {
   buildTabFocusScript,
   DarwinPlatform,
   escapeAppleScript,
   getPlatform,
+  LinuxPlatform,
   NonDarwinPlatform,
   originOf,
   originsMatch,
+  WindowsPlatform,
 } from '../src/platform/index.js'
 import { createTestHome, removeTestHome } from './helpers.js'
 
@@ -87,12 +98,16 @@ describe('platform dry-run behavior', () => {
     return readFileSync(logPath(), 'utf8')
   }
 
-  it('selects the implementation for the current operating system', () => {
-    const platform = getPlatform()
-    if (process.platform === 'darwin') {
-      expect(platform).toBeInstanceOf(DarwinPlatform)
-    } else {
-      expect(platform).toBeInstanceOf(NonDarwinPlatform)
+  it('dispatches each operating system to its platform implementation', () => {
+    for (const [name, implementation] of [
+      ['darwin', DarwinPlatform],
+      ['linux', LinuxPlatform],
+      ['win32', WindowsPlatform],
+      ['freebsd', NonDarwinPlatform],
+    ] as const) {
+      vi.spyOn(process, 'platform', 'get').mockReturnValue(name)
+      expect(getPlatform()).toBeInstanceOf(implementation)
+      vi.restoreAllMocks()
     }
   })
 

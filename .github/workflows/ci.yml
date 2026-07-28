@@ -11,12 +11,16 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
         os:
           - macos-latest
           - ubuntu-latest
+          - windows-latest
         node:
           - 20
           - 22
@@ -41,6 +45,7 @@ jobs:
         run: npm test
 
       - name: Verify reproducible bundle
+        if: runner.os != 'Windows'
         run: |
           npm run bundle
           cp dist/meanwhile.mjs "$RUNNER_TEMP/meanwhile-first.mjs"

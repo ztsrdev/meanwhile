@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-28
+
+### Added
+
+- Linux support with full behavior on X11. Wayland opens sites and sends notifications but cannot read or control focus.
+- Experimental Windows support that opens sites and attempts application activation.
+- Codex inside Conductor support, verified live against Conductor's inline hook injection with codex-cli 0.144.1.
+- A Windows CI job.
+
 ### Changed
 
 - Renamed awaitlingo to meanwhile across the product, CLI, package, integrations, and documentation.
