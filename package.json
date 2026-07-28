@@ -1,6 +1,25 @@
 {
   "name": "meanwhile-cli",
   "version": "0.1.0",
+  "description": "Open any site while your coding agent works, then get pulled back when it needs you. Hooks for Claude Code, Codex, and Conductor.",
+  "license": "MIT",
+  "author": "ZepaMK",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ztsrdev/meanwhile.git"
+  },
+  "homepage": "https://github.com/ztsrdev/meanwhile#readme",
+  "bugs": "https://github.com/ztsrdev/meanwhile/issues",
+  "keywords": [
+    "claude-code",
+    "codex",
+    "conductor",
+    "ai-agents",
+    "productivity",
+    "duolingo",
+    "macos",
+    "hooks"
+  ],
   "type": "module",
   "bin": {
     "meanwhile": "dist/meanwhile.mjs"

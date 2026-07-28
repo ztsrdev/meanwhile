@@ -6,7 +6,7 @@ meanwhile uses macOS Automation to identify the frontmost app and activate a cod
 
 1. Install meanwhile and submit a prompt that runs longer than `delaySeconds`.
 2. The confirmation timer runs in the background.
-3. When it fires—about 20 seconds with the default config—macOS may show an Automation dialog.
+3. When it fires (about 20 seconds with the default config), macOS may show an Automation dialog.
 4. The dialog names a controlling app and target, commonly your terminal/host app and System Events or the app being reactivated.
 5. Click **OK**.
 
