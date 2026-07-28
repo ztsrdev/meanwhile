@@ -11,7 +11,7 @@
 | `PermissionRequest` | Pull back immediately because Codex needs approval. |
 | `SessionEnd` | Remove the session's local state. |
 
-Entries live under the file's top-level `"hooks"` key — Codex ignores event
+Entries live under the file's top-level `"hooks"` key. Codex ignores event
 groups placed at the root (verified against codex-cli 0.144.1). Each event
 receives one command hook equivalent to:
 
